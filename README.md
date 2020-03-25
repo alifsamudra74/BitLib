@@ -1,3 +1,3 @@
 # BitLib
 
-This is a bit-sized library for C++
+This is a bit-sized programming language based on Python 3
