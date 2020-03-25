@@ -17,6 +17,10 @@ class Error:
         result = f'{self.error_name}: {self.details}'
         return result
 
+class IllegalCharError(Error):
+    def __init__(self, details):
+        super().__init__('Illegal Character', details)
+
 #######################
 #        TOKENS
 #######################
@@ -75,12 +79,11 @@ class Lexer:
             elif self.current_char == ')':
                 tokens.append(Token(TT_RPAREN))
             else:
-                # return some error
+                char = self.current_char
+                self.advance()
+                return [], IllegalCharError("'" + char + "'")
             
-            
-
-
-        return tokens
+        return tokens, None
 
     def make_number(self):
         num_str = ''
