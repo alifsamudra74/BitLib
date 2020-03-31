@@ -160,6 +160,35 @@ class BinOpNode:
         return f'{self.left_node}, {self.op_tok}, {self.right_node}'
 
 #######################
+#       PARSER
+#######################
+
+class Parser:
+    def __init__(tokens):
+        self.tokens = tokens
+        self.tok_idx = 1
+        self.advance()
+    
+    def advance():
+        self.tok_idx += 1
+        if self.tok_idx < len(self.tokens):
+            self.current_tok = self.tokens[self.tok_idx]
+        return self.current_tok
+
+    def factor():
+        tok = self.current_tok
+
+        if tok.type in (TT_INT, TT_FLOAT):
+            self.advance()
+            return NumberNode(tok)
+
+    def term():
+        pass
+
+    def expr():
+        pass
+
+#######################
 #         RUN
 #######################
 
