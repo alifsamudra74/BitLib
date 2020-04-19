@@ -1,4 +1,10 @@
 #######################
+#       IMPORTS
+#######################
+
+from strings_with_arrows import *
+
+#######################
 #      CONSTANTS
 #######################
 
@@ -18,11 +24,16 @@ class Error:
     def as_string(self):
         result  = f'{self.error_name}: {self.details}\n'
         result += f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
+        result += '\n\n' + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result
 
 class IllegalCharError(Error):
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, 'Illegal Character', details)
+
+class InvalidSyntaxError(Error):
+    def __init__(self, pos_start, pos_end, details=''):
+        super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
 
 #######################
 #       POSITION
@@ -63,9 +74,17 @@ TT_LPAREN   = 'LPAREN'
 TT_RPAREN   = 'RPAREN'
 
 class Token:
-    def __init__(self, type_, value=None):
+    def __init__(self, type_, value=None, pos_start=None, pos_end=None):
         self.type = type_
         self.value = value
+
+        if pos_start:
+            self.pos_start = pos_start.copy()
+            self.pos_end = pos_start.copy()
+            self.pos_end.advance()
+
+        if pos_end:
+            self.pos_end = pos_end
     
     def __repr__(self):
         if self.value: return f'{self.type}:{self.value}'
@@ -160,6 +179,30 @@ class BinOpNode:
         return f'{self.left_node}, {self.op_tok}, {self.right_node}'
 
 #######################
+#     PARSE RESULT
+#######################
+
+def ParseResult:
+    def __init__(self):
+        self.error = None
+         self.node = None
+
+    def register(self, res):
+        if isinstance(res, ParseResult):
+            if res.error: self.error = res.error
+            return res.node
+
+        return res
+    
+    def success(self, node):
+        self.node = node
+        return self
+    
+    def failure(self, error):
+        self.error = error
+        return self
+
+#######################
 #       PARSER
 #######################
 
@@ -175,35 +218,46 @@ class Parser:
             self.current_tok = self.tokens[self.tok_idx]
         return self.current_tok
 
-    #######################
-
     def parse(self):
         res = self.expr()
         return res
 
+    #######################
+
     def factor(self):
+        res = ParseResult()
         tok = self.current_tok
 
         if tok.type in (TT_INT, TT_FLOAT):
-            self.advance()
-            return NumberNode(tok)
+            res.register(self.advance())
+            return res.success(NumberNode(tok))
+
+        return res.failure(InvalidSyntaxError(
+            tok.pos_start, tok.pos_end,
+            "Expected int or float"
+        ))
 
     def term(self):
         return self.bin_op(self.factor, (TT_MUL, TT_DIV))
 
     def expr(self):
         return self.bin_op(self.factor, (TT_PLUS, TT_MINUS))
+
+    #######################
     
     def bin_op(self, func, ops):
-        left = func()
+        res = ParseResult()
+        left = res.register(func())
+        if res.error: return res
 
-        while self.current_tok in ops:
+        while self.current_tok.type in ops:
             op_tok = self.current_tok
-            self.advance()
-            right = func()
+            res.register(self.advance())
+            right = res.register(func())
+            if res.error: return res
             left = BinOpNode(left, op_tok, right)
         
-        return left
+        return res.success(left)
 
 #######################
 #         RUN
@@ -212,5 +266,10 @@ class Parser:
 def run(fn, text):
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
+    if error: return None, error
 
-    return tokens, error
+    # Generate AST
+    parser = Parser(tokens)
+    ast = parser.parse()
+
+    return ast, None
