@@ -4,7 +4,7 @@ expr		: KEYWORD:TBH IDENTIFIER EQ expr
 comp-expr	: TDK comp-expr
 			: arith-expr ((EE|LT|GT|LTE|GTE) arith-expr)*
 
-arith-expr	:	term ((PLUS|MINUS) term)*
+arith-expr	: term ((PLUS|MINUS) term)*
 
 term		: factor ((MUL|DIV) factor)*
 
@@ -15,5 +15,8 @@ power		: atom (POW factor)*
 
 atom 		: INT|FLOAT|IDENTIFIER
 			: LPAREN expr RPAREN
+			: if-expr
 
-! a
+if-expr		: KEYWORD:JIKA expr KEYWORD:MAKA expr
+				(KEYWORD:LNJK expr KEYWORD:MAKA expr)*
+				(KEYWORD:LAIN expr)?
