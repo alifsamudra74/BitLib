@@ -1,36 +1,59 @@
-expr		: KEYWORD:TBH IDENTIFIER EQ expr
-			: comp-expr ((KEYWORD:DAN|KEYWORD:ATAU) comp-expr)*
+statements  : NEWLINE* statement (NEWLINE+ statement)* NEWLINE*
 
-comp-expr	: TDK comp-expr
-			: arith-expr ((EE|LT|GT|LTE|GTE) arith-expr)*
+statement	: KEYWORD:KMBL expr?
+				: KEYWORD:LNJT
+				: KEYWORD:HBS
+				: expr
 
-arith-expr	:	term ((PLUS|MINUS) term)*
+expr        : KEYWORD:TBH IDENTIFIER EQ expr
+            : comp-expr ((KEYWORD:DAN|KEYWORD:ATAU) comp-expr)*
 
-term		: factor ((MUL|DIV) factor)*
+comp-expr   : TDK comp-expr
+            : arith-expr ((EE|LT|GT|LTE|GTE) arith-expr)*
 
-factor		: (PLUS|MINUS) factor
-			: power
+arith-expr  :	term ((PLUS|MINUS) term)*
 
-power		: call (POW factor)*
+term        : factor ((MUL|DIV) factor)*
 
-call		: atom (LPAREN (expr (COMMA expr)*)? RPAREN)?
+factor      : (PLUS|MINUS) factor
+            : power
 
-atom 		: INT|FLOAT|STRING|IDENTIFIER
-				: LPAREN expr RPAREN
-				: if-expr
-				: for-expr
-				: while-expr
-				: func-def
+power       : call (POW factor)*
 
-if-expr		: KEYWORD:JIKA expr KEYWORD:MAKA expr
-				(KEYWORD:LNJK expr KEYWORD:MAKA expr)*
-				(KEYWORD:LAIN expr)?
+call        : atom (LPAREN (expr (COMMA expr)*)? RPAREN)?
 
-for-expr	: KEYWORD:UTK IDENTIFIER EQ expr KEYWORD:KE expr 
-				(KEYWORD:LGKH expr)? KEYWORD:MAKA expr
+atom        : INT|FLOAT|STRING|IDENTIFIER
+            : LPAREN expr RPAREN
+            : list-expr
+            : if-expr
+            : for-expr
+            : while-expr
+            : func-def
 
-while-expr	: KEYWORD:SLM expr KEYWORD:MAKA expr
+list-expr   : LSQUARE (expr (COMMA expr)*)? RSQUARE
 
-func-def	: KEYWORD:FUNG IDENTIFIER?
-				LPAREN (IDENTIFIER (COMMA IDENTIFIER)*)? RPAREN
-				ARROW expr
+if-expr     : KEYWORD:JIKA expr KEYWORD:MAKA
+              (statement if-expr-b|if-expr-c?)
+            | (NEWLINE statements KEYWORD:SLSI|if-expr-b|if-expr-c)
+
+if-expr-b   : KEYWORD:LNJK expr KEYWORD:MAKA
+              (statement if-expr-b|if-expr-c?)
+            | (NEWLINE statements KEYWORD:SLSI|if-expr-b|if-expr-c)
+
+if-expr-c   : KEYWORD:LAIN
+              statement
+            | (NEWLINE statements KEYWORD:SLSI)
+
+for-expr    : KEYWORD:UTK IDENTIFIER EQ expr KEYWORD:LGKH expr 
+              (KEYWORD:LGKH expr)? KEYWORD:MAKA
+              statement
+            | (NEWLINE statements KEYWORD:SLSI)
+
+while-expr  : KEYWORD:SLM expr KEYWORD:MAKA
+              statement
+            | (NEWLINE statements KEYWORD:SLSI)
+
+func-def    : KEYWORD:FUNG IDENTIFIER?
+              LPAREN (IDENTIFIER (COMMA IDENTIFIER)*)? RPAREN
+              (ARROW expr)
+            | (NEWLINE statements KEYWORD:SLSI)
