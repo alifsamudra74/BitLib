@@ -4,19 +4,33 @@ expr		: KEYWORD:TBH IDENTIFIER EQ expr
 comp-expr	: TDK comp-expr
 			: arith-expr ((EE|LT|GT|LTE|GTE) arith-expr)*
 
-arith-expr	: term ((PLUS|MINUS) term)*
+arith-expr	:	term ((PLUS|MINUS) term)*
 
 term		: factor ((MUL|DIV) factor)*
 
 factor		: (PLUS|MINUS) factor
 			: power
 
-power		: atom (POW factor)*
+power		: call (POW factor)*
 
-atom 		: INT|FLOAT|IDENTIFIER
-			: LPAREN expr RPAREN
-			: if-expr
+call		: atom (LPAREN (expr (COMMA expr)*)? RPAREN)?
+
+atom 		: INT|FLOAT|STRING|IDENTIFIER
+				: LPAREN expr RPAREN
+				: if-expr
+				: for-expr
+				: while-expr
+				: func-def
 
 if-expr		: KEYWORD:JIKA expr KEYWORD:MAKA expr
 				(KEYWORD:LNJK expr KEYWORD:MAKA expr)*
 				(KEYWORD:LAIN expr)?
+
+for-expr	: KEYWORD:UTK IDENTIFIER EQ expr KEYWORD:KE expr 
+				(KEYWORD:LGKH expr)? KEYWORD:MAKA expr
+
+while-expr	: KEYWORD:SLM expr KEYWORD:MAKA expr
+
+func-def	: KEYWORD:FUNG IDENTIFIER?
+				LPAREN (IDENTIFIER (COMMA IDENTIFIER)*)? RPAREN
+				ARROW expr
